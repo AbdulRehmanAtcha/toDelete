@@ -96,6 +96,7 @@ app.post("/login", async (req, res) => {
         const token = jwt.sign(
           {
             _id: UserData._id,
+            name: UserData.name,
             email: UserData.email,
             iat: Math.floor(Date.now() / 1000) - 30,
             exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
