@@ -1,6 +1,8 @@
 import axios from "axios";
 import React, { useState, useContext } from "react";
 import { GlobalContext } from "../../context/Context";
+import { NavLink } from 'react-router-dom';
+// import { useNavigate } from "react-router-dom";
 
 let baseURL = "";
 if (window.location.href.split(":")[0] === "http") {
@@ -8,10 +10,10 @@ if (window.location.href.split(":")[0] === "http") {
 }
 
 const Login = () => {
+  // let navigate = useNavigate();
   let { state, dispatch } = useContext(GlobalContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
 
   const loginHandler = async (e) => {
     e.preventDefault();
@@ -26,10 +28,22 @@ const Login = () => {
           withCredentials: true,
         }
       );
-      dispatch({
-        type: "USER_LOGIN",
-        payload: response.data.profile,
-      });
+      // dispatch({
+      //   type: "USER_LOGIN",
+      //   payload: response.data.profile,
+      // });
+
+      if (response.data.message === "Admin login successful") {
+        dispatch({
+          type: "ADMIN_LOGIN",
+          payload: response.data.profile,
+        });
+      } else if (response.data.message === "User login successful") {
+        dispatch({  
+          type: "USER_LOGIN",
+          payload: response.data.profile,
+        });
+      }
       alert(response.data.message);
     } catch {
       console.log("Error", e);
@@ -64,6 +78,7 @@ const Login = () => {
         <br />
         <button type="submit">Login</button>
       </form>
+      <h2>Already Have An Account? <NavLink to="/signup">Click Here</NavLink></h2>
     </>
   );
 };

@@ -7,6 +7,7 @@ let data = {
   darkTheme: true,
   user: {},
   isLogin: null,
+  isAdmin: null
   
 }
 

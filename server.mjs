@@ -183,7 +183,7 @@ const gettingUser = async (req, res) => {
     ).exec();
     if (!user) {
       res.status(404);
-      res.send({});
+      res.send(user);
       return;
     } else {
       res.status(200);
