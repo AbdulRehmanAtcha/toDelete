@@ -32,6 +32,7 @@ const Login = () => {
       //   type: "USER_LOGIN",
       //   payload: response.data.profile,
       // });
+      
 
       if (response.data.message === "Admin login successful") {
         dispatch({
@@ -44,7 +45,13 @@ const Login = () => {
           payload: response.data.profile,
         });
       }
-      alert(response.data.message);
+      if(response.data.message !== undefined){
+        alert(response.data.message);
+      }
+      // console.log(response)
+      else if(response.data.message === undefined){
+        alert(response.data)
+      }
     } catch {
       console.log("Error", e);
     }

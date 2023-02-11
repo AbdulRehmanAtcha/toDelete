@@ -127,7 +127,7 @@ app.post("/api/v1/login", async (req, res) => {
       }
     });
   } else {
-    res.send("Server Error");
+    res.send("Invalid Email Or Password");
   }
 });
 

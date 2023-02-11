@@ -17,7 +17,7 @@ const Signup = () => {
     e.preventDefault();
     if (password === conPassword) {
       axios
-        .post(`${baseURL}/register`, {
+        .post(`${baseURL}/api/v1/register`, {
           name: name,
           email: email,
           phone: phone,
