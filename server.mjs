@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 import path from "path";
 import cors from "cors";
 import { stringToHash, varifyHash } from "bcrypt-inzi";
-import cookieParser from 'cookie-parser';
-import jwt from 'jsonwebtoken';
+import cookieParser from "cookie-parser";
+import jwt from "jsonwebtoken";
 const app = express();
 const port = process.env.PORT || 5001;
 const __dirname = path.resolve();
@@ -13,7 +13,14 @@ const SECRET = process.env.SECRET || "topsecret";
 const MongoDBURI =
   process.env.MongoDBURI ||
   "mongodb+srv://abdul:abdulpassword@cluster0.zcczzqa.mongodb.net/test?retryWrites=true&w=majority";
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:3000", "*"],
+    credentials: true,
+    origin: true,
+  })
+);
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -41,7 +48,7 @@ const Office = new mongoose.model("Staff", officeSchema);
 let EmployeModel = new mongoose.model("Employee", employeSchema);
 // let products = [];
 
-app.post("/register", async (req, res) => {
+app.post("/api/v1/register", async (req, res) => {
   const body = req.body;
   const registerEmployee = new stringToHash(body.password).then(
     (hashString) => {
@@ -68,24 +75,7 @@ app.post("/register", async (req, res) => {
   );
 });
 
-// app.post("/login", async (req, res) => {
-//   const body = req.body;
-//   EmployeModel.findOne({email: body.email, password: body.password}, "email name gender phone", (err, data)=>{
-//     if(!err){
-//       if(data){
-//         res.send("Login Successfull")
-//       }
-//       else{
-//         res.send("User Not Found")
-//       }
-//     }
-//     else{
-//       res.send("Server Error")
-//     }
-//   })
-// });
-
-app.post("/login", async (req, res) => {
+app.post("/api/v1/login", async (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const UserData = await EmployeModel.findOne({ email: email });
@@ -114,15 +104,23 @@ app.post("/login", async (req, res) => {
         });
 
         if (UserData.isAdmin === true) {
-          res.send("Admin Login Successfull");
-          // console.log(
-          //   `Body's Password Is: ${password} and mongoDB password Is: ${UserData.password} and isAdmin: ${UserData.isAdmin}`
-          // );
+          res.send({
+            message: "Admin login successful",
+            profile: {
+              email: UserData.email,
+              name: UserData.name,
+              _id: UserData._id,
+            },
+          });
         } else {
-          res.send("User Login Successfull");
-          // console.log(
-          //   `Body's Password Is: ${password} and mongoDB password Is: ${UserData.password} and isAdmin: ${UserData.isAdmin}`
-          // );
+          res.send({
+            message: "User login successful",
+            profile: {
+              email: UserData.email,
+              name: UserData.name,
+              _id: UserData._id,
+            },
+          });
         }
       } else {
         res.send("Invalid Email Or Password");
@@ -133,46 +131,76 @@ app.post("/login", async (req, res) => {
   }
 });
 
-
-
 app.use("/api/v1", (req, res, next) => {
   console.log("req.cookies: ", req.cookies);
 
   if (!req?.cookies?.Token) {
-      res.status(401).send({
-          message: "include http-only credentials with every request",
-      });
-      return;
+    res.status(401).send({
+      message: "include http-only credentials with every request",
+    });
+    return;
   }
 
   jwt.verify(req.cookies.Token, SECRET, function (err, decodedData) {
-      if (!err) {
-          console.log("decodedData: ", decodedData);
+    if (!err) {
+      console.log("decodedData: ", decodedData);
 
-          const nowDate = new Date().getTime() / 1000;
+      const nowDate = new Date().getTime() / 1000;
 
-          if (decodedData.exp < nowDate) {
-              res.status(401);
-              res.cookie("Token", "", {
-                  maxAge: 1,
-                  httpOnly: true,
-                  sameSite: 'none',
-                  secure: true,
-              });
-              res.send({ message: "token expired" });
-          } else {
-              console.log("token approved");
-
-              req.body.token = decodedData;
-              next();
-          }
+      if (decodedData.exp < nowDate) {
+        res.status(401);
+        res.cookie("Token", "", {
+          maxAge: 1,
+          httpOnly: true,
+          sameSite: "none",
+          secure: true,
+        });
+        res.send({ message: "token expired" });
       } else {
-          res.status(401).send("invalid token");
+        console.log("token approved");
+
+        req.token = decodedData;
+        next();
       }
+    } else {
+      res.status(401).send("invalid token");
+    }
   });
 });
 
-app.post("/product", async (req, res) => {
+const gettingUser = async (req, res) => {
+  let _id = "";
+  if (req.params.id) {
+    _id = req.params.id;
+  } else {
+    _id = req.token._id;
+  }
+
+  try {
+    const user = await EmployeModel.findOne(
+      { _id: _id },
+      "name email -_id"
+    ).exec();
+    if (!user) {
+      res.status(404);
+      res.send({});
+      return;
+    } else {
+      res.status(200);
+      res.send({ user });
+    }
+  } catch (error) {
+    console.log("Error", error);
+    res.status(500);
+    res.send({
+      message: "Error",
+    });
+  }
+};
+
+app.get("/api/v1/profile", gettingUser);
+
+app.post("/api/v1/product", async (req, res) => {
   const body = req.body;
   if (!body.name || !body.position || !body.salary) {
     res.status(400);
@@ -206,7 +234,7 @@ app.post("/product", async (req, res) => {
   // console.log(adding);
 });
 
-app.get("/products", (req, res) => {
+app.get("/api/v1/products", (req, res) => {
   Office.find({}, (err, data) => {
     if (!err) {
       res.send({
@@ -223,7 +251,7 @@ app.get("/products", (req, res) => {
 });
 // .sort({name: 1})
 
-app.get("/product/:id", (req, res) => {
+app.get("/api/v1/product/:id", (req, res) => {
   const id = req.params.id;
   let isFound = false;
   for (var i = 0; i < products.length; i++) {
@@ -243,7 +271,7 @@ app.get("/product/:id", (req, res) => {
   }
 });
 
-app.delete("/product/:id", (req, res) => {
+app.delete("/api/v1/product/:id", (req, res) => {
   const id = req.params.id;
   Office.deleteOne({ _id: id }, (err, data) => {
     if (!err) {
@@ -284,7 +312,7 @@ app.delete("/product/:id", (req, res) => {
   // }
 });
 
-app.put("/product/:editId", (req, res) => {
+app.put("/api/v1/product/:editId", (req, res) => {
   const id = req.params.editId;
   const body = req.body;
   Office.findOneAndUpdate(

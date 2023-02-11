@@ -10,6 +10,7 @@ if (window.location.href.split(":")[0] === "http") {
 }
 
 function Main() {
+  axios.defaults.withCredentials = true;
   const [empName, setEmpName] = useState("");
   const [empPosition, setEmpPosition] = useState("");
   const [empSalary, setEmpSalary] = useState("");
@@ -22,7 +23,7 @@ function Main() {
   const addHandler = (e) => {
     e.preventDefault();
     axios
-      .post(`${baseURL}/product`, {
+      .post(`${baseURL}/api/v1/product`, {
         name: empName,
         position: empPosition,
         salary: empSalary,
@@ -38,7 +39,7 @@ function Main() {
   };
   const allProducts = async () => {
     try {
-      const response = await axios.get(`${baseURL}/products`);
+      const response = await axios.get(`${baseURL}/api/v1/products`);
       console.log("Getting All Products Success", response.data);
       setAllItems(response.data.data);
       // console.log(allItems)
@@ -53,7 +54,7 @@ function Main() {
 
   const deleteProduct = async (id) => {
     try {
-      const response = await axios.delete(`${baseURL}/product/${id}`);
+      const response = await axios.delete(`${baseURL}/api/v1/product/${id}`);
       alert("Product Deleted Successfully");
       console.log("Delete Success", response);
       allProducts();
@@ -68,7 +69,7 @@ function Main() {
 
   const updateHandler = async ()=>{
     try{
-      const response = await axios.put(`${baseURL}/product/${editId}`, {
+      const response = await axios.put(`${baseURL}/api/v1/product/${editId}`, {
         name: newEmpName,
         position: newEmpPosition,
         salary: newEmpSalary
